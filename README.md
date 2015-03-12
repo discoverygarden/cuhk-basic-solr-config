@@ -7,6 +7,10 @@ If one wishes to index Drupal content and users, one might process the `conf/dat
 * `drupal_db_username`
 * `drupal_db_password`
 
+From Solr contrib the contained requires (drop 'em in Solr's "WEB-INF/lib" directory):
+* lib/icu4j-49.1.jar
+* lucene-libs/lucene-analyzers-icu-4.2.0.jar
+
 The 4.x branch is setup to utilize solr 4ish configurations. These have been successfully tested with solr 4.2.0. 
 
 One major difference between solr 3.x and 4.x is when deploying configs they used to go to /usr/local/fedora/solr now they get deployed to /usr/local/fedora/solr/collection1 instead.
