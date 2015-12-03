@@ -137,7 +137,7 @@
     <xsl:param name="datastream">not provided</xsl:param>
     <xsl:param name="node" select="current()"/>
     <xsl:if test="not(normalize-space($node/../mods:namePart[not(@*)][1]) ='') and not(normalize-space(.)='')">
-      <xsl:variable name="value" select="concat($node/../mods:namePart[not(@*)][1], ', ', normalize-space(.))"/>
+      <xsl:variable name="value" select="concat(normalize-space($node/../mods:namePart[not(@*)][1]), ', ', normalize-space(.))"/>
       <xsl:variable name="prefix_fork" select="concat($prefix, 'namePart_termsOfAddress_fork_')"/>
       <xsl:call-template name="general_mods_field">
         <xsl:with-param name="prefix" select="$prefix_fork"/>
@@ -149,6 +149,7 @@
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
+  
   <!-- Custom mapping for CUHK name type corporate. -->
   <xsl:template match="mods:name[@type='corporate']" mode="slurping_MODS">
     <xsl:param name="prefix"/>
