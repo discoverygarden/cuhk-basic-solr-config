@@ -177,7 +177,7 @@
             </xsl:for-each>
           </xsl:when>
           <xsl:otherwise>
-            <xsl:value-of select="normalize-space(text())"/>
+            <xsl:value-of select="text()"/>
           </xsl:otherwise>
       </xsl:choose>
     </xsl:variable>
@@ -187,7 +187,7 @@
       <xsl:call-template name="mods_language_fork">
         <xsl:with-param name="prefix" select="$this_prefix"/>
         <xsl:with-param name="suffix" select="$suffix"/>
-        <xsl:with-param name="value" select="$value"/>
+        <xsl:with-param name="value" select="normalize-space($value)"/>
         <xsl:with-param name="pid" select="$pid"/>
         <xsl:with-param name="datastream" select="$datastream"/>
         <xsl:with-param name="node" select="../.."/>
@@ -197,7 +197,7 @@
     <xsl:call-template name="mods_language_fork">
       <xsl:with-param name="prefix" select="$base_prefix"/>
       <xsl:with-param name="suffix" select="$suffix"/>
-      <xsl:with-param name="value" select="$value"/>
+      <xsl:with-param name="value" select="normalize-space($value)"/>
       <xsl:with-param name="pid" select="$pid"/>
       <xsl:with-param name="datastream" select="$datastream"/>
     </xsl:call-template>
