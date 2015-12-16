@@ -145,7 +145,7 @@
     </xsl:variable>
     <xsl:if test="not(normalize-space($value)='')">
       <xsl:variable name="prefix_fork" select="concat($prefix, 'name_corporate_fork_')"/>
-      <xsl:call-template name="general_mods_field">
+      <xsl:call-template name="mods_language_fork">
         <xsl:with-param name="prefix" select="$prefix_fork"/>
         <xsl:with-param name="suffix" select="$suffix"/>
         <xsl:with-param name="value" select="normalize-space($value)"/>
@@ -167,7 +167,7 @@
     <xsl:if test="not(normalize-space($node/../mods:namePart[not(@*)][1]) ='') and not(normalize-space(.)='')">
       <xsl:variable name="value" select="concat(normalize-space($node/../mods:namePart[not(@*)][1]), ', ', normalize-space(.))"/>
       <xsl:variable name="prefix_fork" select="concat($prefix, 'namePart_termsOfAddress_fork_')"/>
-      <xsl:call-template name="general_mods_field">
+      <xsl:call-template name="mods_language_fork">
         <xsl:with-param name="prefix" select="$prefix_fork"/>
         <xsl:with-param name="suffix" select="$suffix"/>
         <xsl:with-param name="value" select="$value"/>
