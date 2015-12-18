@@ -27,6 +27,13 @@
       <xsl:with-param name="pid" select="../../@PID"/>
       <xsl:with-param name="datastream" select="../@ID"/>
     </xsl:apply-templates>
+    
+    <xsl:apply-templates mode="cuhk_slurping_MODS" select="$content//mods:mods[1]/mods:name">
+      <xsl:with-param name="prefix" select="$prefix"/>
+      <xsl:with-param name="suffix" select="$suffix"/>
+      <xsl:with-param name="pid" select="../../@PID"/>
+      <xsl:with-param name="datastream" select="../@ID"/>
+    </xsl:apply-templates>
   </xsl:template>
 
   <!-- Handle dates. -->
@@ -128,8 +135,23 @@
     </xsl:call-template>
   </xsl:template>
   
+  <!-- Build up the list prefix with the element context. -->
+  <xsl:template match="*" mode="cuhk_slurping_MODS">
+    <xsl:param name="prefix"/>
+    <xsl:param name="suffix"/>
+    
+    <xsl:variable name="this_prefix">
+      <xsl:value-of select="concat($prefix, local-name(), '_')"/>
+    </xsl:variable>
+    
+    <xsl:apply-templates mode="cuhk_slurping_MODS">
+      <xsl:with-param name="prefix" select="$this_prefix"/>
+      <xsl:with-param name="suffix" select="$suffix"/>
+    </xsl:apply-templates>
+  </xsl:template>
+  
   <!-- Custom mapping for CUHK name type corporate. -->
-  <xsl:template match="mods:name[@type='corporate']" mode="slurping_MODS">
+  <xsl:template match="mods:name[@type='corporate']" mode="cuhk_slurping_MODS">
     <xsl:param name="prefix"/>
     <xsl:param name="suffix"/>
     <xsl:param name="value"/>
@@ -144,7 +166,7 @@
       </xsl:for-each>
     </xsl:variable>
     <xsl:if test="not(normalize-space($value)='')">
-      <xsl:variable name="prefix_fork" select="concat($prefix, 'name_corporate_fork_')"/>
+      <xsl:variable name="prefix_fork" select="concat($prefix, 'name_corporate_merge_')"/>
       <xsl:call-template name="mods_language_fork">
         <xsl:with-param name="prefix" select="$prefix_fork"/>
         <xsl:with-param name="suffix" select="$suffix"/>
@@ -157,23 +179,23 @@
   </xsl:template>
   
   <!-- Custom mapping for CUHK namePart type termsOfAddress. -->
-  <xsl:template match="mods:namePart[@type='termsOfAddress']" mode="slurping_MODS">
+  <xsl:template match="mods:name[@type='personal'][mods:namePart[@type='termsOfAddress']]" mode="cuhk_slurping_MODS">
     <xsl:param name="prefix"/>
     <xsl:param name="suffix"/>
     <xsl:param name="value"/>
     <xsl:param name="pid">not provided</xsl:param>
     <xsl:param name="datastream">not provided</xsl:param>
     <xsl:param name="node" select="current()"/>
-    <xsl:if test="not(normalize-space($node/../mods:namePart[not(@*)][1]) ='') and not(normalize-space(.)='')">
-      <xsl:variable name="value" select="concat(normalize-space($node/../mods:namePart[not(@*)][1]), ', ', normalize-space(.))"/>
-      <xsl:variable name="prefix_fork" select="concat($prefix, 'namePart_termsOfAddress_fork_')"/>
+    <xsl:if test="not(normalize-space(mods:namePart[not(@*)][1]) ='') and not(normalize-space(mods:namePart[@type='termsOfAddress'][1])='')">
+      <xsl:variable name="value" select="concat(normalize-space(mods:namePart[not(@*)][1]), ', ', normalize-space(mods:namePart[@type='termsOfAddress'][1]))"/>
+      <xsl:variable name="prefix_fork" select="concat($prefix, 'namePart_termsOfAddress_merge_')"/>
       <xsl:call-template name="mods_language_fork">
         <xsl:with-param name="prefix" select="$prefix_fork"/>
         <xsl:with-param name="suffix" select="$suffix"/>
         <xsl:with-param name="value" select="$value"/>
         <xsl:with-param name="pid" select="$pid"/>
         <xsl:with-param name="datastream" select="$datastream"/>
-        <xsl:with-param name="node" select="$node"/>
+        <xsl:with-param name="node" select="mods:namePart[@type='termsOfAddress'][1]"/>
       </xsl:call-template>
     </xsl:if>
   </xsl:template>
@@ -328,4 +350,6 @@
       <xsl:with-param name="datastream" select="$datastream"/>
     </xsl:apply-templates>
   </xsl:template>
+  <!-- Delete non-explicit text in this mode -->
+  <xsl:template match="text()" mode="cuhk_slurping_MODS"/>
 </xsl:stylesheet>
