@@ -318,6 +318,8 @@
    <field name="collection_membership_pid_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="collection_membership_title_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="collection_membership_title_mt" type="text_fgs" indexed="true" stored="true" multiValued="true"/>
+   <field name="subject_topic_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="subject_topic_merge_mt" type="text_fgs" indexed="true" stored="true" multiValued="true"/>
    <!-- Here, default is used to create a "timestamp" field indicating
         When each document was indexed.
      -->
