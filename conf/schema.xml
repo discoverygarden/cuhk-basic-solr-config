@@ -314,7 +314,21 @@
    <!-- catchall field, containing all other searchable text fields (implemented
         via copyField further on in this schema  -->
    <field name="catch_all_fields_mt" type="text" indexed="true" stored="false" multiValued="true"/>
-
+   <!-- catch titleInfo and originInfo label to solr  --> 
+   <field name="mods_titleInfo_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="mods_titleInfo_merge_mt" type="text_fgs" indexed="true" stored="true" multiValued="true"/>
+   <field name="mods_originInfo_place_publisher_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="mods_originInfo_place_publisher_merge_mt" type="text_fgs" indexed="true" stored="true" multiValued="true"/>
+   <!-- catch title in relatedItem with attribute host to solr  --> 
+   <field name="mods_relatedItem_host_titleInfo_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="mods_relatedItem_host_titleInfo_merge_mt" type="text_fgs" indexed="true" stored="true" multiValued="true"/>
+   <!-- catch collection name and collection id to solr  --> 
+   <field name="collection_membership_pid_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="collection_membership_title_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="collection_membership_title_mt" type="text_fgs" indexed="true" stored="true" multiValued="true"/>
+   <!-- catch subject topic label to solr  --> 
+   <field name="mods_subject_topic_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="mods_subject_topic_merge_mt" type="text_fgs" indexed="true" stored="true" multiValued="true"/>
    <!-- Here, default is used to create a "timestamp" field indicating
         When each document was indexed.
      -->
