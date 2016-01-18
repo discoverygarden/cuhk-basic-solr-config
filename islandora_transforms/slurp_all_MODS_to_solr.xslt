@@ -34,23 +34,111 @@
       <xsl:with-param name="pid" select="../../@PID"/>
       <xsl:with-param name="datastream" select="../@ID"/>
     </xsl:apply-templates>
-    <xsl:apply-templates mode="cuhk_slurping_subject_MODS" select="$content//mods:mods[1]">
-        
-    </xsl:apply-templates>    
+    <xsl:apply-templates mode="cuhk_slurping_subject_MODS" select="$content//mods:mods[1]/mods:subject"></xsl:apply-templates> 
+    <xsl:apply-templates mode="cuhk_slurping_titleInfo_MODS" select="$content//mods:mods[1]/mods:titleInfo[1]"></xsl:apply-templates>   
+    <xsl:apply-templates mode="cuhk_slurping_originInfo_MODS" select="$content//mods:mods[1]/mods:originInfo"></xsl:apply-templates>   
+    <xsl:apply-templates mode="cuhk_slurping_relatedItem_MODS" select="$content//mods:mods[1]/mods:relatedItem[@type='host']/mods:titleInfo"></xsl:apply-templates>
+    
   </xsl:template>
   <!-- Merge all subject sub tab into one field. -->
-    <xsl:template match="mods:subject" mode="cuhk_slurping_subject_MODS">
-        <field name="subject_topic_merge_ms">
-                <xsl:for-each select="*[local-name()!='cartographics' and local-name()!='geographicCode' and local-name()!='hierarchicalGeographic']">
+    <xsl:template match="*" mode="cuhk_slurping_subject_MODS">
+        <!--<xsl:if test="mods:topic or mods:geographic">-->
+        <xsl:variable name="subjectItem">
+            <xsl:for-each select="*[local-name()!='cartographics' and local-name()!='geographicCode' and local-name()!='hierarchicalGeographic']">
+                <xsl:if test="normalize-space(.) != ''">
+                    <xsl:if test="position() > 1">
+                        <xsl:if test="not(normalize-space(.)='')"> -- </xsl:if>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <!--</xsl:if>-->
+        <xsl:if test="not(normalize-space($subjectItem)= '')">
+            <field name="mods_subject_topic_merge_ms">
+                <xsl:value-of select="$subjectItem"/>
+                <xsl:if test="not(substring($subjectItem, (string-length($subjectItem) - string-length('.')) + 1)='.')">
+                    <xsl:value-of select="'.'"/>
+                </xsl:if>
+            </field>
+        </xsl:if>
+   </xsl:template>
+    <!-- Merge all titleInfo fields into one field. -->
+    <xsl:template match="*" mode="cuhk_slurping_titleInfo_MODS">
+        <xsl:variable name="titleItem">
+            <xsl:for-each select="*[local-name()='nonSort' or local-name()='title' or local-name()='subTitle']">
+                <xsl:if test="normalize-space(.) != ''">
+                    <xsl:if test="position() > 1 and local-name() != 'subTitle'">
+                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                    </xsl:if>
+                    <xsl:if test="local-name() = 'subTitle'">
+                        <xsl:if test="not(normalize-space(.)='')"> : </xsl:if>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:if test="normalize-space($titleItem) != ''">
+            <field name="mods_titleInfo_merge_ms">
+                <xsl:value-of select="$titleItem"/>
+            </field>
+        </xsl:if>
+   </xsl:template>
+   <!-- Merge below two conditions into new field
+    * 1. place/placeTerm (with attribute type which value equal to 'text') under originInfo
+    * 2. publisher under originInfo
+    -->
+    <xsl:template match="*" mode="cuhk_slurping_originInfo_MODS">
+        <xsl:if test="mods:place/mods:placeTerm[@type='text'] or mods:publisher">
+            <xsl:variable name="titleItem">
+                <xsl:for-each select="mods:place/mods:placeTerm[@type='text']">
+                    <xsl:if test="position() > 1">
+                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:for-each>
+                <xsl:for-each select="mods:publisher">
                     <xsl:if test="normalize-space(.) != ''">
-                        <xsl:if test="position() > 1">
-                            <xsl:if test="not(normalize-space(.)='')">--</xsl:if>
+                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                        <xsl:value-of select="normalize-space(.)"/>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:variable>
+            <xsl:if test="normalize-space($titleItem) != ''">
+                <field name="mods_originInfo_place_publisher_merge_ms">
+                    <xsl:value-of select="$titleItem"/>
+                </field>
+            </xsl:if>
+        </xsl:if>
+   </xsl:template>
+   <!-- Below three sub items under relatedItem (with attribute type which value equal to 'host')
+    * 1. nonSort
+    * 2. title
+    * 3. subTitle
+    --> 
+    <xsl:template match="*" mode="cuhk_slurping_relatedItem_MODS">
+        <xsl:if test="mods:nonSort or mods:title or mods:subTitle">
+            <xsl:variable name="relatedItem_title">
+                <xsl:for-each select="*[local-name()='nonSort' or local-name()='title' or local-name()='subTitle']">
+                    <xsl:if test="normalize-space(.) != ''">
+                        <xsl:if test="position() > 1 and local-name() != 'subTitle'">
+                            <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                        </xsl:if>
+                        <xsl:if test="local-name() = 'subTitle'">
+                            <xsl:if test="not(normalize-space(.)='')"> : </xsl:if>
                         </xsl:if>
                         <xsl:value-of select="normalize-space(.)"/>
                     </xsl:if>
                 </xsl:for-each>
-        </field>
+            </xsl:variable>
+            <xsl:if test="normalize-space($relatedItem_title) != ''">
+                <field name="mods_relatedItem_host_titleInfo_merge_ms">
+                    <xsl:value-of select="$relatedItem_title"/>
+                </field>
+            </xsl:if>
+        </xsl:if>
    </xsl:template>
+   
   <!-- Handle dates. -->
   <xsl:template match="mods:*[(@type='date') or (contains(translate(local-name(), 'D', 'd'), 'date'))][normalize-space(text())]" mode="slurping_MODS">
     <xsl:param name="prefix"/>
@@ -167,7 +255,7 @@
   </xsl:template>
   
   <!-- Custom mapping for CUHK name type corporate. -->
-  <xsl:template match="mods:name[@type='corporate']" mode="cuhk_slurping_MODS">
+  <!--<xsl:template match="mods:name[@type='corporate']" mode="cuhk_slurping_MODS">
     <xsl:param name="prefix"/>
     <xsl:param name="suffix"/>
     <xsl:param name="value"/>
@@ -180,8 +268,9 @@
           <xsl:value-of select="concat(normalize-space(.), ' ')"/>
         </xsl:if>
       </xsl:for-each>
-    </xsl:variable>
-    <xsl:if test="not(normalize-space($value)='')">
+    </xsl:variable> 
+    
+  <xsl:if test="not(normalize-space($value)='')">
       <xsl:variable name="prefix_fork" select="concat($prefix, 'name_corporate_namePart_merge_')"/>
       <xsl:call-template name="mods_language_fork">
         <xsl:with-param name="prefix" select="$prefix_fork"/>
@@ -189,13 +278,136 @@
         <xsl:with-param name="value" select="normalize-space($value)"/>
         <xsl:with-param name="pid" select="$pid"/>
         <xsl:with-param name="datastream" select="$datastream"/>
+        <xsl:with-param name="node" select="$node/mods:namePart"/>
         <xsl:with-param name="node" select="$node/mods:namePart[not(@*)][1]"/>
       </xsl:call-template>
     </xsl:if>
+  </xsl:template>-->
+   
+  <!-- Custom mapping for CUHK namePart type personal and corporate -->
+  <xsl:template match="mods:name[@type='personal']|mods:name[@type='corporate']" mode="cuhk_slurping_MODS">
+    <xsl:param name="prefix"/>
+    <xsl:param name="suffix"/>
+    <xsl:param name="value"/>
+    <xsl:param name="pid">not provided</xsl:param>
+    <xsl:param name="datastream">not provided</xsl:param>
+    <xsl:param name="node" select="current()"/>
+    <xsl:variable name="nameAttribute" select="normalize-space(local-name())"/>
+    <xsl:variable name="typeName">
+        <xsl:value-of select="normalize-space(@type)" />
+    </xsl:variable>
+    <xsl:variable name="tempNamePartFamily">
+        <xsl:for-each select="mods:namePart[@type='family']">
+            <xsl:if test="normalize-space(.) != ''">
+                <xsl:if test="position() > 1">
+                    <xsl:value-of select="' '"/>
+                </xsl:if>
+                <xsl:value-of select="normalize-space(.)"/>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:variable>
+    <xsl:variable name="tempNamePartGiven">
+        <xsl:for-each select="mods:namePart[@type='given']">
+            <xsl:if test="not(normalize-space(.)='')">
+              <xsl:if test="position() > 1">
+                    <xsl:value-of select="' '"/>
+                </xsl:if>
+              <xsl:value-of select="normalize-space(.)"/>
+           </xsl:if>
+        </xsl:for-each>
+    </xsl:variable>
+    <xsl:variable name="tempNamePart">
+        <xsl:for-each select="mods:namePart[count(@*)=0]">
+            <xsl:if test="not(normalize-space(.)='')">
+              <xsl:if test="position() > 1">
+                    <xsl:value-of select="' '"/>
+                </xsl:if>
+              <xsl:value-of select="normalize-space(.)"/>
+           </xsl:if>
+        </xsl:for-each>
+    </xsl:variable>
+    <xsl:variable name="tempNamePartTermsOfAddress">
+        <xsl:for-each select="mods:namePart[@type='termsOfAddress']">
+            <xsl:if test="not(normalize-space(.)='')">
+                <xsl:if test="position() > 1">
+                    <xsl:value-of select="' '"/>
+                </xsl:if>
+                <xsl:value-of select="normalize-space(.)"/>
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:variable>
+    <xsl:variable name="tempNamePartDate">
+        <xsl:for-each select="mods:namePart[@type='date']">
+            <xsl:if test="not(normalize-space(.)='')">
+                <xsl:if test="position() > 1">
+                    <xsl:value-of select="' '"/>
+                </xsl:if>
+                <xsl:value-of select="normalize-space(.)"/>
+                
+            </xsl:if>
+        </xsl:for-each>
+    </xsl:variable>
+    <xsl:variable name="tempValue">
+        <xsl:if test="not(normalize-space($tempNamePartFamily)='')">
+            <xsl:value-of select="$tempNamePartFamily"/>
+        </xsl:if>
+        <xsl:if test="normalize-space($tempNamePartGiven)!=''">
+            <xsl:if test="not(normalize-space($tempNamePartFamily)='')">
+                <xsl:value-of select="', '"/>
+            </xsl:if>
+            <xsl:value-of select="$tempNamePartGiven"/>
+        </xsl:if>
+        <xsl:if test="not(normalize-space($tempNamePart)='')">
+            <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='')">
+                <xsl:value-of select="', '"/>
+            </xsl:if>
+            <xsl:value-of select="$tempNamePart"/>
+        </xsl:if>
+        <xsl:if test="not(normalize-space($tempNamePartTermsOfAddress)='')">
+            <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='') or not(normalize-space($tempNamePart)='')">
+                <xsl:value-of select="', '"/>
+            </xsl:if>
+            <xsl:value-of select="$tempNamePartTermsOfAddress"/>
+        </xsl:if>
+        <xsl:if test="not(normalize-space($tempNamePartDate)='')">
+            <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='') or not(normalize-space($tempNamePart)='') or not(normalize-space($tempNamePartTermsOfAddress)='')">
+                <xsl:value-of select="', '"/>
+            </xsl:if>
+            <xsl:value-of select="$tempNamePartDate"/>
+        </xsl:if>
+    </xsl:variable>
+    
+    
+    <xsl:variable name="prefix_fork">
+        <xsl:value-of select="$prefix"/>
+        <!--<xsl:choose>-->
+            <xsl:if test="$typeName='corporate'">
+                <xsl:value-of select="'name_corporate_namePart_merge_'"/>
+            </xsl:if>
+            <xsl:if test="$typeName='personal'">
+                <xsl:value-of select="'name_personal_namePart_merge_'"/>
+            </xsl:if>
+        <!--</xsl:choose>-->
+    </xsl:variable>
+    <!--<xsl:variable name="prefix_fork" select="concat($prefix, 'name_personal_namePart_merge_')"/>-->
+    <xsl:if test="not(normalize-space($tempValue)='')">
+        <xsl:variable name="value">
+            <xsl:value-of select="$tempValue"/>
+            <xsl:if test="not(substring($tempValue, (string-length($tempValue) - string-length('.')) + 1)='.')">
+                <xsl:value-of select="'.'"/>
+            </xsl:if>
+        </xsl:variable>
+        <xsl:call-template name="mods_language_fork">
+          <xsl:with-param name="prefix" select="$prefix_fork"/>
+          <xsl:with-param name="suffix" select="$suffix"/>
+          <xsl:with-param name="value" select="$value"/>
+          <xsl:with-param name="pid" select="$pid"/>
+          <xsl:with-param name="datastream" select="$datastream"/>
+          <xsl:with-param name="node" select="$node/mods:namePart"/>
+        </xsl:call-template>
+     </xsl:if>
   </xsl:template>
-  
-  <!-- Custom mapping for CUHK namePart type termsOfAddress. -->
-  <xsl:template match="mods:name[@type='personal'][mods:namePart[@type='termsOfAddress']]" mode="cuhk_slurping_MODS">
+  <!--<xsl:template match="mods:name[@type='personal'][mods:namePart[@type='termsOfAddress']]" mode="cuhk_slurping_MODS">
     <xsl:param name="prefix"/>
     <xsl:param name="suffix"/>
     <xsl:param name="value"/>
@@ -214,7 +426,7 @@
         <xsl:with-param name="node" select="mods:namePart[@type='termsOfAddress'][1]"/>
       </xsl:call-template>
     </xsl:if>
-  </xsl:template>
+  </xsl:template>-->
   
   <!-- Intercept names with role terms, so we can create copies of the fields
     including the role term in the name of generated fields. (Hurray, additional
