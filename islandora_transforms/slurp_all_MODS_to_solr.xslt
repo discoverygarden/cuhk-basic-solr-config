@@ -467,6 +467,32 @@
     </xsl:call-template>
   </xsl:template>
 
+  <!-- Custom mapping for titleInfo/partNumber so we can sort numerically. Of
+       possible importance to note is that the partNumber field should only
+       contain one contiguous integer; if the field contains something such as
+       "Vol. 1, iss. 12", this will interpret that field as "112", which is not
+       likely desirable. -->
+  <xsl:template match="mods:titleInfo/mods:partNumber" mode="slurping_MODS">
+    <xsl:param name="prefix"/>
+    <xsl:param name="suffix"/>
+    <xsl:param name="value"/>
+    <xsl:param name="pid">not provided</xsl:param>
+    <xsl:param name="datastream">not provided</xsl:param>
+    <xsl:param name="node" select="current()"/>
+    <xsl:if test="not(normalize-space($node/../mods:partNumber[not(@*)][1]) ='') and not(normalize-space(.)='')">
+      <xsl:variable name="value" select="normalize-space($node/../mods:partNumber[not(@*)][1])"/>
+      <xsl:variable name="number_value" select="translate($value, translate($value, '0123456789', ''), '')"/>
+      <xsl:variable name="prefix_fork" select="concat($prefix, 'partNumber_sortable_fork')"/>
+      <field>
+        <xsl:attribute name="name">
+          <xsl:value-of select="concat($prefix_fork, '_i')"/>
+        </xsl:attribute>
+        <xsl:value-of select="$number_value"/>
+      </field>
+    </xsl:if>
+  </xsl:template>
+
+
   <!-- Fields are duplicated for authority because searches across authorities are common. -->
   <xsl:template name="mods_authority_fork">
     <xsl:param name="prefix"/>
