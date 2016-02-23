@@ -35,7 +35,7 @@
       <xsl:with-param name="datastream" select="../@ID"/>
     </xsl:apply-templates>
     <xsl:apply-templates mode="cuhk_slurping_subject_MODS" select="$content//mods:mods[1]/mods:subject"></xsl:apply-templates> 
-    <xsl:apply-templates mode="cuhk_slurping_titleInfo_MODS" select="$content//mods:mods[1]/mods:titleInfo[1]"></xsl:apply-templates>   
+    <xsl:apply-templates mode="cuhk_slurping_titleInfo_MODS" select="$content//mods:mods[1]/mods:titleInfo[@type=''] | $content//mods:mods[1]/mods:titleInfo[not(@type)]"></xsl:apply-templates>   
     <xsl:apply-templates mode="cuhk_slurping_originInfo_MODS" select="$content//mods:mods[1]/mods:originInfo"></xsl:apply-templates>   
     <xsl:apply-templates mode="cuhk_slurping_relatedItem_MODS" select="$content//mods:mods[1]/mods:relatedItem[@type='host']/mods:titleInfo"></xsl:apply-templates>
     
@@ -87,6 +87,7 @@
    <!-- Merge below two conditions into new field
     * 1. place/placeTerm (with attribute type which value equal to 'text') under originInfo
     * 2. publisher under originInfo
+    * 3. dateIssued (with attribute qualifier)
     -->
     <xsl:template match="*" mode="cuhk_slurping_originInfo_MODS">
         <xsl:if test="mods:place/mods:placeTerm[@type='text'] or mods:publisher">
@@ -98,6 +99,12 @@
                     <xsl:value-of select="normalize-space(.)"/>
                 </xsl:for-each>
                 <xsl:for-each select="mods:publisher">
+                    <xsl:if test="normalize-space(.) != ''">
+                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                        <xsl:value-of select="normalize-space(.)"/>
+                    </xsl:if>
+                </xsl:for-each>
+                <xsl:for-each select="mods:dateIssued[@qualifier]">
                     <xsl:if test="normalize-space(.) != ''">
                         <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
                         <xsl:value-of select="normalize-space(.)"/>
