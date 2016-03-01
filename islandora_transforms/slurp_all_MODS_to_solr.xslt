@@ -612,13 +612,13 @@
     <xsl:param name="pid">not provided</xsl:param>
     <xsl:param name="datastream">not provided</xsl:param>
     <xsl:param name="node" select="current()"/>
-    <xsl:if test="not(normalize-space($node/../mods:partNumber[not(@*)][1]) ='') and not(normalize-space(.)='')">
+    <xsl:variable name="field_name" select="concat($prefix, 'partNumber_sortable_fork_i')"/>
+    <xsl:if test="not(normalize-space($node/../mods:partNumber[not(@*)][1]) ='') and not(normalize-space(.)='') and java:add($single_valued_hashset, $field_name)">
       <xsl:variable name="value" select="normalize-space($node/../mods:partNumber[not(@*)][1])"/>
       <xsl:variable name="number_value" select="translate($value, translate($value, '0123456789', ''), '')"/>
-      <xsl:variable name="prefix_fork" select="concat($prefix, 'partNumber_sortable_fork')"/>
       <field>
         <xsl:attribute name="name">
-          <xsl:value-of select="concat($prefix_fork, '_i')"/>
+          <xsl:value-of select="$field_name"/>
         </xsl:attribute>
         <xsl:value-of select="$number_value"/>
       </field>
