@@ -12,7 +12,7 @@
   <xsl:include href="/usr/local/fedora/tomcat/webapps/fedoragsearch/WEB-INF/classes/fgsconfigFinal/index/FgsIndex/islandora_transforms/manuscript_finding_aid.xslt"/>
   <!-- HashSet to track single-valued fields. -->
   <xsl:variable name="single_valued_hashset" select="java:java.util.HashSet.new()"/>
-
+    <xsl:variable name="vAllowedSymbols" select="'&#x5b;&#x5d;&#x3c;&#x3e;&#x28;&#x29;&#x2f;&#x2c;&#x2d;'"/>
   <xsl:template match="foxml:datastream[@ID='MODS']/foxml:datastreamVersion[last()]" name="index_MODS">
     <xsl:param name="content"/>
     <xsl:param name="prefix"></xsl:param>
@@ -37,6 +37,7 @@
     <xsl:apply-templates mode="cuhk_slurping_subject_MODS" select="$content//mods:mods[1]/mods:subject"></xsl:apply-templates> 
     <xsl:apply-templates mode="cuhk_slurping_titleInfo_MODS" select="$content//mods:mods[1]/mods:titleInfo[@type=''] | $content//mods:mods[1]/mods:titleInfo[not(@type)]"></xsl:apply-templates>   
     <xsl:apply-templates mode="cuhk_slurping_originInfo_MODS" select="$content//mods:mods[1]/mods:originInfo"></xsl:apply-templates>   
+    <xsl:apply-templates mode="cuhk_slurping_originInfo_dateCreated_MODS" select="$content//mods:mods[1]/mods:originInfo[1]"></xsl:apply-templates>   
     <xsl:apply-templates mode="cuhk_slurping_relatedItem_MODS" select="$content//mods:mods[1]/mods:relatedItem[@type='host']/mods:titleInfo"></xsl:apply-templates>
     
   </xsl:template>
@@ -114,6 +115,44 @@
             <xsl:if test="normalize-space($titleItem) != ''">
                 <field name="mods_originInfo_place_publisher_merge_ms">
                     <xsl:value-of select="$titleItem"/>
+                </field>
+            </xsl:if>
+        </xsl:if>
+        <!-- 
+        * Try to greb the created date from originalInfo tab and store in a new field
+        --> 
+        <xsl:if test="mods:dateIssued[count(@*)=0] or mods:dateCreated[count(@*)=0]">
+            <xsl:variable name="dateCreated">
+                <xsl:for-each select="mods:dateIssued[count(@*)=0]">
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:for-each>
+                <xsl:for-each select="mods:dateCreated[count(@*)=0]">
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:for-each>
+            </xsl:variable>
+            
+            <xsl:if test="normalize-space($dateCreated) != ''">
+                
+                <field name="mods_created_date_year_ms">
+                    <xsl:value-of select="translate($dateCreated,$vAllowedSymbols,'')"/>
+                </field>
+                
+            </xsl:if>
+        </xsl:if>
+   </xsl:template>
+   <!-- 
+    * Try to greb the created date from originalInfo tab and store in the sortable field
+    * Single Value Required
+    --> 
+   <xsl:template match="*" mode="cuhk_slurping_originInfo_dateCreated_MODS">
+       <xsl:if test="mods:dateIssued[count(@*)=0] or mods:dateCreated[count(@*)=0]">
+            <xsl:variable name="dateCreatedSingle">
+                <xsl:value-of select="normalize-space(mods:dateIssued[count(@*)=0])"/>
+                <xsl:value-of select="normalize-space(mods:dateCreated[count(@*)=0])"/>
+            </xsl:variable>
+            <xsl:if test="normalize-space($dateCreatedSingle) != ''">
+                <field name="mods_created_date_year_ss">
+                    <xsl:value-of select="translate($dateCreatedSingle,$vAllowedSymbols,'')"/>
                 </field>
             </xsl:if>
         </xsl:if>
@@ -333,6 +372,7 @@
            </xsl:if>
         </xsl:for-each>
     </xsl:variable>
+    
     <xsl:variable name="tempNamePartTermsOfAddress">
         <xsl:for-each select="mods:namePart[@type='termsOfAddress']">
             <xsl:if test="not(normalize-space(.)='')">
@@ -413,7 +453,93 @@
           <xsl:with-param name="node" select="$node/mods:namePart"/>
         </xsl:call-template>
      </xsl:if>
+     
   </xsl:template>
+   <xsl:template match="mods:name[@type='corporate']" mode="cuhk_slurping_MODS">
+       <xsl:param name="prefix"/>
+        <xsl:param name="suffix"/>
+        <xsl:param name="value"/>
+        <xsl:param name="pid">not provided</xsl:param>
+        <xsl:param name="datastream">not provided</xsl:param>
+        <xsl:param name="node" select="current()"/>
+        <xsl:variable name="nameAttribute" select="normalize-space(local-name())"/>
+        
+        <xsl:variable name="tempDepartment">
+            <xsl:for-each select="mods:namePart[count(@*)=0]">
+                <xsl:if test="not(normalize-space(.)='')">
+                  <xsl:if test="position() = last()">
+                        <xsl:value-of select="normalize-space(.)"/>
+                  </xsl:if>
+               </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="prefix_fork">
+            <xsl:value-of select="$prefix"/>
+            <xsl:value-of select="'name_corporate_department_'"/>
+        </xsl:variable>
+        <xsl:if test="not(normalize-space($tempDepartment)='')">
+            <xsl:variable name="value">
+                <xsl:value-of select="$tempDepartment"/>
+            </xsl:variable>
+            <xsl:call-template name="mods_language_fork">
+              <xsl:with-param name="prefix" select="$prefix_fork"/>
+              <xsl:with-param name="suffix" select="$suffix"/>
+              <xsl:with-param name="value" select="$value"/>
+              <xsl:with-param name="pid" select="$pid"/>
+              <xsl:with-param name="datastream" select="$datastream"/>
+              <xsl:with-param name="node" select="$node/mods:namePart"/>
+            </xsl:call-template>
+         </xsl:if>
+    </xsl:template>
+    <!--
+    * 1.Get value from note field where type equal to thesis
+    * 2.Get the degree in string
+    -->
+    <xsl:template match="mods:note[@type='thesis']" mode="cuhk_slurping_MODS">
+       <xsl:param name="prefix"/>
+        <xsl:param name="suffix"/>
+        <xsl:param name="value"/>
+        <xsl:param name="pid">not provided</xsl:param>
+        <xsl:param name="datastream">not provided</xsl:param>
+        <xsl:param name="node" select="current()"/>
+        <xsl:variable name="nameAttribute" select="normalize-space(local-name())"/>
+        <xsl:variable name="tempValue">
+            <xsl:for-each select=".">
+                <xsl:if test="not(normalize-space(.)='')">
+                    <xsl:value-of select="substring-after(normalize-space(.),'(')"/>
+               </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="tempValue1">
+            <xsl:if test="not(normalize-space($tempValue)='')">
+                <xsl:value-of select="substring-before(normalize-space($tempValue),')')"/>
+            </xsl:if>
+        </xsl:variable>
+        <xsl:variable name="tempDegree">
+            
+            <xsl:if test="not(normalize-space($tempValue1)='')">
+                <xsl:value-of select="normalize-space($tempValue1)"/>
+           </xsl:if>
+            
+        </xsl:variable>
+        <xsl:variable name="prefix_fork">
+            <xsl:value-of select="$prefix"/>
+            <xsl:value-of select="'name_degree_'"/>
+        </xsl:variable>
+        <xsl:if test="not(normalize-space($tempDegree)='')">
+            <xsl:variable name="value">
+                <xsl:value-of select="$tempDegree"/>
+            </xsl:variable>
+            <xsl:call-template name="mods_language_fork">
+              <xsl:with-param name="prefix" select="$prefix_fork"/>
+              <xsl:with-param name="suffix" select="$suffix"/>
+              <xsl:with-param name="value" select="$value"/>
+              <xsl:with-param name="pid" select="$pid"/>
+              <xsl:with-param name="datastream" select="$datastream"/>
+              <xsl:with-param name="node" select="$node"/>
+            </xsl:call-template>
+         </xsl:if>
+    </xsl:template>
   <!--<xsl:template match="mods:name[@type='personal'][mods:namePart[@type='termsOfAddress']]" mode="cuhk_slurping_MODS">
     <xsl:param name="prefix"/>
     <xsl:param name="suffix"/>
