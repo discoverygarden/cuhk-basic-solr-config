@@ -372,6 +372,9 @@
    <field name="dc.description" type="text_fgs"  indexed="true"  stored="true" multiValued="true"/>
    <dynamicField name="*" type="text_fgs"  indexed="true"  stored="true" multiValued="true"/>
    <field name="_version_" type="long" indexed="true" stored="true"/>
+   <!-- begin: islandora_solution_pack_oralhistories setup -->
+   <dynamicField name="or_*" type="text" indexed="true" stored="true" multiValued="true"/>
+   <!-- end: islandora_solution_pack_oralhistories setup -->
 
  </fields>
 
