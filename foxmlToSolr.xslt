@@ -117,29 +117,6 @@
   <xsl:include href="/usr/local/fedora/tomcat/webapps/fedoragsearch/WEB-INF/classes/fgsconfigFinal/index/FgsIndex/islandora_transforms/or_transcript_solr.xslt"/>
   <xsl:include href="/usr/local/fedora/tomcat/webapps/fedoragsearch/WEB-INF/classes/fgsconfigFinal/index/FgsIndex/islandora_transforms/vtt_solr.xslt"/>
   <!-- end: islandora_solution_pack_oralhistories setup --> 
-  
-  	<xsl:template match="/">
-		<!-- begin: islandora_solution_pack_oralhistories setup -->
-		<xsl:choose>
-			<xsl:when test="@CONTROL_GROUP='M' and @ID='TRANSCRIPT' and foxml:datastreamVersion[last()][@MIMETYPE='text/vtt']"></xsl:when>
-		<xsl:otherwise> </xsl:otherwise>
-		</xsl:choose>
-		<!-- end: islandora_solution_pack_oralhistories setup -->
-		<xsl:choose>
-			<xsl:when test="@CONTROL_GROUP='M' and foxml:datastreamVersion[last() and not(starts-with(@MIMETYPE, 'image') or starts-with(@MIMETYPE, 'audio') or starts-with(@MIMETYPE, 'video') or @MIMETYPE = 'application/pdf')]">
-			
-			<!-- TODO: should do something about mime type filtering text/plain should use the getDatastreamText extension because document will only work for xml docs xml files should use the document function other mimetypes should not be being sent will this let us not use the content variable? -->
-
-			<xsl:apply-templates select="foxml:datastreamVersion[last()]">
-
-			<xsl:with-param name="content" select="java:ca.discoverygarden.gsearch_extensions.XMLStringUtils.escapeForXML(normalize-space(exts:getDatastreamText($PID, $REPOSITORYNAME, @ID, $FEDORASOAP, $FEDORAUSER, $FEDORAPASS, $TRUSTSTOREPATH, $TRUSTSTOREPASS)))"/>
-
-			</xsl:apply-templates>
-		
-			</xsl:when>
-			<xsl:otherwise> </xsl:otherwise>
-		</xsl:choose>
-	</xsl:template>
 
   <!-- Decide which objects to modify the index of -->
   <xsl:template match="/">
@@ -255,7 +232,8 @@
                handle the mimetypes supported by the "getDatastreamText" call:
                https://github.com/fcrepo/gsearch/blob/master/FedoraGenericSearch/src/java/dk/defxws/fedoragsearch/server/TransformerToText.java#L185-L200
           -->
-          <xsl:when test="@CONTROL_GROUP='M' and foxml:datastreamVersion[last() and not(starts-with(@MIMETYPE, 'image') or starts-with(@MIMETYPE, 'audio') or starts-with(@MIMETYPE, 'video') or @MIMETYPE = 'application/pdf')]">
+          <xsl:when test="@CONTROL_GROUP='M' and @ID='TRANSCRIPT' and foxml:datastreamVersion[last()][@MIMETYPE='text/vtt']"></xsl:when>
+          <xsl:when test="@CONTROL_GROUP='M' and foxml:datastreamVersion[last() and not(starts-with(@MIMETYPE, 'image') or starts-with(@MIMETYPE, 'audio') or starts-with(@MIMETYPE, 'video') or @MIMETYPE = 'application/pdf')]and not(@ID='TRANSCRIPT' and foxml:datastreamVersion[last()][@MIMETYPE='text/vtt'])">
             <!-- TODO: should do something about mime type filtering
               text/plain should use the getDatastreamText extension because document will only work for xml docs
               xml files should use the document function
