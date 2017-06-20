@@ -329,12 +329,11 @@
    <!-- catch subject topic label to solr  --> 
    <field name="mods_subject_topic_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="mods_subject_topic_merge_mt" type="text" indexed="true" stored="true" multiValued="true"/>
+   <!-- catch role info to solr  --> 
+   <field name="mods_name_role_info_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <!-- Here, default is used to create a "timestamp" field indicating
         When each document was indexed.
      -->
-    <!-- catch role info to solr  --> 
-   <field name="mods_name_role_info_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
-    
    <field name="mods_created_date_year_ss" type="moreSortableString" indexed="true" stored="true"/>
    <field name="mods_created_date_year_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="timestamp" type="date" indexed="true" stored="true" default="NOW" multiValued="false"/>
