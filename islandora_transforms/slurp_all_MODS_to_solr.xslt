@@ -39,6 +39,7 @@
     <xsl:apply-templates mode="cuhk_slurping_originInfo_MODS" select="$content//mods:mods[1]/mods:originInfo"></xsl:apply-templates>   
     <xsl:apply-templates mode="cuhk_slurping_originInfo_dateCreated_MODS" select="$content//mods:mods[1]/mods:originInfo[1]"></xsl:apply-templates>   
     <xsl:apply-templates mode="cuhk_slurping_relatedItem_MODS" select="$content//mods:mods[1]/mods:relatedItem[@type='host']/mods:titleInfo"></xsl:apply-templates>
+    <xsl:apply-templates mode="cuhk_slurping_name_MODS" select="$content//mods:mods[1]/mods:name"></xsl:apply-templates>
     
   </xsl:template>
   <!-- Merge all subject sub tab into one field. -->
@@ -184,7 +185,28 @@
             </xsl:if>
         </xsl:if>
    </xsl:template>
-   
+   <!-- Custom mapping for merging 
+    - name[personal][namePart] and name[role][roleTerm]
+    - name[corporate][namePart] and name[role][roleTerm]
+  -->
+   <xsl:template match="*" mode="cuhk_slurping_name_MODS">
+        <xsl:variable name="nameRoleTerm">
+            <xsl:for-each select="mods:role/mods:roleTerm">
+                 <xsl:value-of select="concat('(',translate(normalize-space(.),'.',''),')')"/>
+             </xsl:for-each>
+        </xsl:variable>
+        <xsl:for-each select="mods:namePart">
+            <field name="mods_name_role_info_merge_ms">
+                <xsl:if test="normalize-space(.) != ''">
+                    <xsl:value-of select="translate(normalize-space(.),'.','')"/>
+                    <xsl:if test="normalize-space($nameRoleTerm) != ''">
+                        <xsl:text> </xsl:text>
+                        <xsl:value-of select="normalize-space($nameRoleTerm)"/>
+                    </xsl:if>
+                </xsl:if>
+            </field>
+        </xsl:for-each>
+   </xsl:template>
   <!-- Handle dates. -->
   <xsl:template match="mods:*[(@type='date') or (contains(translate(local-name(), 'D', 'd'), 'date'))][normalize-space(text())]" mode="slurping_MODS">
     <xsl:param name="prefix"/>
