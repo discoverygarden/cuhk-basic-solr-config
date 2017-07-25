@@ -326,11 +326,14 @@
    <field name="collection_membership_pid_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="collection_membership_title_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="collection_membership_title_mt" type="text" indexed="true" stored="true" multiValued="true"/>
+   <!-- catch corporate namePart to solr  --> 
+   <field name="mods_name_corporate_namePart_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <!-- catch subject topic label to solr  --> 
    <field name="mods_subject_topic_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="mods_subject_topic_merge_mt" type="text" indexed="true" stored="true" multiValued="true"/>
    <!-- catch role info to solr  --> 
-   <field name="mods_name_role_info_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="mods_name_corporate_role_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="mods_name_personal_role_merge_ms" type="string" indexed="true" stored="true" multiValued="true"/>
    <!-- Here, default is used to create a "timestamp" field indicating
         When each document was indexed.
      -->

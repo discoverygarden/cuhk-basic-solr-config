@@ -36,10 +36,11 @@
     </xsl:apply-templates>
     <xsl:apply-templates mode="cuhk_slurping_subject_MODS" select="$content//mods:mods[1]/mods:subject"></xsl:apply-templates> 
     <xsl:apply-templates mode="cuhk_slurping_titleInfo_MODS" select="$content//mods:mods[1]/mods:titleInfo[@type=''] | $content//mods:mods[1]/mods:titleInfo[not(@type)]"></xsl:apply-templates>   
-    <xsl:apply-templates mode="cuhk_slurping_originInfo_MODS" select="$content//mods:mods[1]/mods:originInfo"></xsl:apply-templates>   
+    <xsl:apply-templates mode="cuhk_slurping_originInfo_MODS" select="$content//mods:mods[1]/mods:originInfo"></xsl:apply-templates>
+    <xsl:apply-templates mode="cuhk_slurping_originInfo_all_dateCreated_MODS" select="$content//mods:mods[1]/mods:originInfo"></xsl:apply-templates>      
     <xsl:apply-templates mode="cuhk_slurping_originInfo_dateCreated_MODS" select="$content//mods:mods[1]/mods:originInfo[1]"></xsl:apply-templates>   
     <xsl:apply-templates mode="cuhk_slurping_relatedItem_MODS" select="$content//mods:mods[1]/mods:relatedItem[@type='host']/mods:titleInfo"></xsl:apply-templates>
-    <xsl:apply-templates mode="cuhk_slurping_name_MODS" select="$content//mods:mods[1]/mods:name"></xsl:apply-templates>
+    <xsl:apply-templates mode="cuhk_slurping_name_MODS" select="$content//mods:mods[1]/mods:name[@type='personal'] | $content//mods:mods[1]/mods:name[@type='corporate']"></xsl:apply-templates>
     
   </xsl:template>
   <!-- Merge all subject sub tab into one field. -->
@@ -93,7 +94,7 @@
     -->
     <xsl:template match="*" mode="cuhk_slurping_originInfo_MODS">
         <xsl:if test="mods:place/mods:placeTerm[@type='text'] or mods:publisher">
-            <xsl:variable name="titleItem">
+            <xsl:variable name="titleTerm">
                 <xsl:for-each select="mods:place/mods:placeTerm[@type='text']">
                     <xsl:if test="position() > 1">
                         <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
@@ -102,61 +103,129 @@
                 </xsl:for-each>
                 <xsl:for-each select="mods:publisher">
                     <xsl:if test="normalize-space(.) != ''">
-                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                        <xsl:if test="not(normalize-space(.)='')"><xsl:if test="not(normalize-space(.)='')"> : </xsl:if></xsl:if>
                         <xsl:value-of select="normalize-space(.)"/>
                     </xsl:if>
                 </xsl:for-each>
-                <xsl:for-each select="mods:dateIssued[@qualifier]">
+                <!--<xsl:for-each select="mods:dateIssued[1][count(@*)=0]">
                     <xsl:if test="normalize-space(.) != ''">
-                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
                         <xsl:value-of select="normalize-space(.)"/>
                     </xsl:if>
+                </xsl:for-each>-->
+            </xsl:variable>
+            <xsl:variable name="dateIssued">
+                <xsl:for-each select="mods:dateIssued[count(@*)=0]">
+                    <xsl:if test="position() > 1">
+                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
                 </xsl:for-each>
             </xsl:variable>
-            <xsl:if test="normalize-space($titleItem) != ''">
+            <xsl:variable name="dateCreated">
+                <xsl:for-each select="mods:dateCreated[count(@*)=0]">
+                    <xsl:if test="position() > 1">
+                        <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:for-each>
+            </xsl:variable>
+            <xsl:variable name="dateCreatedMerge">
+                <xsl:if test="not(normalize-space($dateIssued) = '') or not(normalize-space($dateCreated) = '')">
+                    <xsl:if test="not(normalize-space($dateIssued) = '')">
+                        <xsl:value-of select="translate($dateIssued,$vAllowedSymbols,'')"/>
+                    </xsl:if>
+                    <xsl:if test="not(normalize-space($dateIssued) = '') and not(normalize-space($dateCreated)='')">
+                        <xsl:value-of select="', '"/>
+                    </xsl:if>
+                    <xsl:if test="not(normalize-space($dateCreated)='')">
+                        <xsl:value-of select="translate($dateCreated,$vAllowedSymbols,'')"/>
+                    </xsl:if>
+                </xsl:if>
+            </xsl:variable>
+            
+            <xsl:if test="not(normalize-space($titleTerm) = '') or not(normalize-space($dateCreatedMerge) = '')">
                 <field name="mods_originInfo_place_publisher_merge_ms">
-                    <xsl:value-of select="$titleItem"/>
+                    <xsl:if test="not(normalize-space($titleTerm) = '')">
+                        <xsl:value-of select="normalize-space($titleTerm)"/>
+                    </xsl:if>
+                    <xsl:if test="not(normalize-space($titleTerm) = '') and not(normalize-space($dateCreatedMerge)='')">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                    <xsl:if test="not(normalize-space($dateCreatedMerge)='')">
+                        <xsl:value-of select="normalize-space($dateCreatedMerge)"/>
+                    </xsl:if>
                 </field>
             </xsl:if>
         </xsl:if>
-        <!-- 
-        * Try to greb the created date from originalInfo tab and store in a new field
-        --> 
         <xsl:if test="mods:dateIssued[count(@*)=0] or mods:dateCreated[count(@*)=0]">
-            <xsl:variable name="dateCreated">
+            <xsl:variable name="dateIssuedSingleField">
                 <xsl:for-each select="mods:dateIssued[count(@*)=0]">
                     <xsl:value-of select="normalize-space(.)"/>
                 </xsl:for-each>
+            </xsl:variable>
+            <xsl:variable name="dateCreatedSingleField">
                 <xsl:for-each select="mods:dateCreated[count(@*)=0]">
                     <xsl:value-of select="normalize-space(.)"/>
                 </xsl:for-each>
             </xsl:variable>
+            <xsl:choose>
+                <xsl:when test="normalize-space($dateIssuedSingleField) != '' ">
+                    <field name="mods_created_date_year_ms">
+                        <xsl:value-of select="translate($dateIssuedSingleField,$vAllowedSymbols,'')"/>
+                    </field>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:if test="normalize-space($dateCreatedSingleField) != '' ">
+                        <field name="mods_created_date_year_ms">
+                            <xsl:value-of select="translate($dateCreatedSingleField,$vAllowedSymbols,'')"/>
+                        </field>
+                    </xsl:if>
+                </xsl:otherwise>
+            </xsl:choose>
             
-            <xsl:if test="normalize-space($dateCreated) != ''">
-                
-                <field name="mods_created_date_year_ms">
-                    <xsl:value-of select="translate($dateCreated,$vAllowedSymbols,'')"/>
-                </field>
-                
-            </xsl:if>
         </xsl:if>
    </xsl:template>
+   <xsl:template match="*" mode="cuhk_slurping_originInfo_all_dateCreated_MODS">
+   <!-- 
+        * Try to greb the created date from originalInfo tab and store in a new field
+        --> 
+        
+    </xsl:template>
    <!-- 
     * Try to greb the created date from originalInfo tab and store in the sortable field
     * Single Value Required
     --> 
    <xsl:template match="*" mode="cuhk_slurping_originInfo_dateCreated_MODS">
-       <xsl:if test="mods:dateIssued[count(@*)=0] or mods:dateCreated[count(@*)=0]">
-            <xsl:variable name="dateCreatedSingle">
-                <xsl:value-of select="normalize-space(mods:dateIssued[count(@*)=0])"/>
-                <xsl:value-of select="normalize-space(mods:dateCreated[count(@*)=0])"/>
-            </xsl:variable>
-            <xsl:if test="normalize-space($dateCreatedSingle) != ''">
+        <xsl:variable name="dateIssued">
+            <xsl:for-each select="mods:dateIssued[count(@*)=0]">
+                <xsl:if test="position() > 1">
+                    <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                </xsl:if>
+                <xsl:value-of select="normalize-space(.)"/>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="dateCreated">
+            <xsl:for-each select="mods:dateCreated[count(@*)=0]">
+                <xsl:if test="position() > 1">
+                    <xsl:if test="not(normalize-space(.)='')"><xsl:value-of select="' '"/></xsl:if>
+                </xsl:if>
+                <xsl:value-of select="normalize-space(.)"/>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:choose>
+            <xsl:when test="normalize-space($dateIssued) != '' ">
                 <field name="mods_created_date_year_ss">
-                    <xsl:value-of select="translate($dateCreatedSingle,$vAllowedSymbols,'')"/>
+                    <xsl:value-of select="translate($dateIssued,$vAllowedSymbols,'')"/>
                 </field>
-            </xsl:if>
-        </xsl:if>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:if test="normalize-space($dateCreated) != '' ">
+                    <field name="mods_created_date_year_ss">
+                        <xsl:value-of select="translate($dateCreated,$vAllowedSymbols,'')"/>
+                    </field>
+                </xsl:if>
+            </xsl:otherwise>
+        </xsl:choose>
    </xsl:template>
    <!-- Below three sub items under relatedItem (with attribute type which value equal to 'host')
     * 1. nonSort
@@ -190,22 +259,119 @@
     - name[corporate][namePart] and name[role][roleTerm]
   -->
    <xsl:template match="*" mode="cuhk_slurping_name_MODS">
-        <xsl:variable name="nameRoleTerm">
-            <xsl:for-each select="mods:role/mods:roleTerm">
+        <xsl:variable name="nameAttribute" select="normalize-space(local-name())"/>
+        <xsl:variable name="typeName">
+            <xsl:value-of select="normalize-space(@type)" />
+        </xsl:variable>
+        <xsl:variable name="tempNamePartFamily">
+            <xsl:for-each select="mods:namePart[@type='family']">
+                <xsl:if test="normalize-space(.) != ''">
+                    <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="tempNamePartGiven">
+            <xsl:for-each select="mods:namePart[@type='given']">
+                <xsl:if test="not(normalize-space(.)='')">
+                  <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                  <xsl:value-of select="normalize-space(.)"/>
+               </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="tempNamePart">
+            <xsl:for-each select="mods:namePart[not(@*)]">
+                <xsl:if test="not(normalize-space(.)='')">
+                  <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                  <xsl:value-of select="normalize-space(.)"/>
+               </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+
+        <xsl:variable name="tempNamePartTermsOfAddress">
+            <xsl:for-each select="mods:namePart[@type='termsOfAddress']">
+                <xsl:if test="not(normalize-space(.)='')">
+                    <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="tempNamePartDate">
+            <xsl:for-each select="mods:namePart[@type='date']">
+                <xsl:if test="not(normalize-space(.)='')">
+                    <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+
+        <xsl:variable name="tempNameRoleTerm">
+            <xsl:for-each select="mods:role/mods:roleTerm[@type='text']">
+                <xsl:if test="normalize-space(.) != ''">
                  <xsl:value-of select="concat('(',translate(normalize-space(.),'.',''),')')"/>
+                </xsl:if>
              </xsl:for-each>
         </xsl:variable>
-        <xsl:for-each select="mods:namePart">
-            <field name="mods_name_role_info_merge_ms">
-                <xsl:if test="normalize-space(.) != ''">
-                    <xsl:value-of select="translate(normalize-space(.),'.','')"/>
-                    <xsl:if test="normalize-space($nameRoleTerm) != ''">
-                        <xsl:text> </xsl:text>
-                        <xsl:value-of select="normalize-space($nameRoleTerm)"/>
-                    </xsl:if>
+
+        <xsl:variable name="tempValue">
+            <xsl:if test="not(normalize-space($tempNamePartFamily)='')">
+                <xsl:value-of select="$tempNamePartFamily"/>
+            </xsl:if>
+            <xsl:if test="normalize-space($tempNamePartGiven)!=''">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='')">
+                    <xsl:value-of select="', '"/>
                 </xsl:if>
-            </field>
-        </xsl:for-each>
+                <xsl:value-of select="$tempNamePartGiven"/>
+            </xsl:if>
+            <xsl:if test="not(normalize-space($tempNamePart)='')">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='')">
+                    <xsl:value-of select="', '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNamePart"/>
+            </xsl:if>
+            <xsl:if test="not(normalize-space($tempNamePartTermsOfAddress)='')">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='') or not(normalize-space($tempNamePart)='')">
+                    <xsl:value-of select="', '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNamePartTermsOfAddress"/>
+            </xsl:if>
+            <xsl:if test="not(normalize-space($tempNamePartDate)='')">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='') or not(normalize-space($tempNamePart)='') or not(normalize-space($tempNamePartTermsOfAddress)='')">
+                    <xsl:value-of select="', '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNamePartDate"/>
+            </xsl:if>
+            <xsl:if test="not(normalize-space($tempNameRoleTerm)='')">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='') or not(normalize-space($tempNamePart)='') or not(normalize-space($tempNamePartTermsOfAddress)='')or not(normalize-space($tempNamePartDate)='')">
+                    <xsl:value-of select="' '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNameRoleTerm"/>
+            </xsl:if>
+        </xsl:variable>
+        
+        <xsl:if test="not(normalize-space($tempValue)='')">
+            <xsl:if test="$typeName='corporate'">
+                <field name="mods_name_corporate_role_merge_ms">
+                    <xsl:value-of select="normalize-space($tempValue)"/>
+                </field>
+            </xsl:if>
+            <xsl:if test="$typeName='personal'">
+                <field name="mods_name_personal_role_merge_ms">
+                    <xsl:value-of select="normalize-space($tempValue)"/>
+                </field>
+            </xsl:if>
+        </xsl:if>
    </xsl:template>
   <!-- Handle dates. -->
   <xsl:template match="mods:*[(@type='date') or (contains(translate(local-name(), 'D', 'd'), 'date'))][normalize-space(text())]" mode="slurping_MODS">
@@ -353,7 +519,7 @@
   </xsl:template>-->
    
   <!-- Custom mapping for CUHK namePart type personal and corporate -->
-  <xsl:template match="mods:name[@type='personal']|mods:name[@type='corporate']" mode="cuhk_slurping_MODS">
+  <xsl:template match="mods:name[@type='personal']" mode="cuhk_slurping_MODS">
     <xsl:param name="prefix"/>
     <xsl:param name="suffix"/>
     <xsl:param name="value"/>
@@ -385,7 +551,7 @@
         </xsl:for-each>
     </xsl:variable>
     <xsl:variable name="tempNamePart">
-        <xsl:for-each select="mods:namePart[count(@*)=0]">
+        <xsl:for-each select="mods:namePart[not(@*)]">
             <xsl:if test="not(normalize-space(.)='')">
               <xsl:if test="position() > 1">
                     <xsl:value-of select="' '"/>
@@ -416,6 +582,7 @@
             </xsl:if>
         </xsl:for-each>
     </xsl:variable>
+   
     <xsl:variable name="tempValue">
         <xsl:if test="not(normalize-space($tempNamePartFamily)='')">
             <xsl:value-of select="$tempNamePartFamily"/>
@@ -449,22 +616,15 @@
     
     <xsl:variable name="prefix_fork">
         <xsl:value-of select="$prefix"/>
-        <!--<xsl:choose>-->
-            <xsl:if test="$typeName='corporate'">
-                <xsl:value-of select="'name_corporate_namePart_merge_'"/>
-            </xsl:if>
-            <xsl:if test="$typeName='personal'">
-                <xsl:value-of select="'name_personal_namePart_merge_'"/>
-            </xsl:if>
-        <!--</xsl:choose>-->
+            <xsl:value-of select="'name_personal_namePart_merge_'"/>
     </xsl:variable>
     <!--<xsl:variable name="prefix_fork" select="concat($prefix, 'name_personal_namePart_merge_')"/>-->
     <xsl:if test="not(normalize-space($tempValue)='')">
         <xsl:variable name="value">
             <xsl:value-of select="$tempValue"/>
-            <xsl:if test="not(substring($tempValue, (string-length($tempValue) - string-length('.')) + 1)='.')">
+            <!--<xsl:if test="not(substring($tempValue, (string-length($tempValue) - string-length('.')) + 1)='.')">
                 <xsl:value-of select="'.'"/>
-            </xsl:if>
+            </xsl:if>-->
         </xsl:variable>
         <xsl:call-template name="mods_language_fork">
           <xsl:with-param name="prefix" select="$prefix_fork"/>
@@ -477,6 +637,7 @@
      </xsl:if>
      
   </xsl:template>
+  
    <xsl:template match="mods:name[@type='corporate']" mode="cuhk_slurping_MODS">
        <xsl:param name="prefix"/>
         <xsl:param name="suffix"/>
@@ -485,9 +646,62 @@
         <xsl:param name="datastream">not provided</xsl:param>
         <xsl:param name="node" select="current()"/>
         <xsl:variable name="nameAttribute" select="normalize-space(local-name())"/>
+        <xsl:variable name="tempNamePartFamily">
+            <xsl:for-each select="mods:namePart[@type='family']">
+                <xsl:if test="normalize-space(.) != ''">
+                    <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="tempNamePartGiven">
+            <xsl:for-each select="mods:namePart[@type='given']">
+                <xsl:if test="not(normalize-space(.)='')">
+                  <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                  <xsl:value-of select="normalize-space(.)"/>
+               </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="tempNamePart">
+            <xsl:for-each select="mods:namePart[not(@*)]">
+                <xsl:if test="not(normalize-space(.)='')">
+                  <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                  <xsl:value-of select="normalize-space(.)"/>
+               </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+
+        <xsl:variable name="tempNamePartTermsOfAddress">
+            <xsl:for-each select="mods:namePart[@type='termsOfAddress']">
+                <xsl:if test="not(normalize-space(.)='')">
+                    <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+        <xsl:variable name="tempNamePartDate">
+            <xsl:for-each select="mods:namePart[@type='date']">
+                <xsl:if test="not(normalize-space(.)='')">
+                    <xsl:if test="position() > 1">
+                        <xsl:value-of select="' '"/>
+                    </xsl:if>
+                    <xsl:value-of select="normalize-space(.)"/>
+
+                </xsl:if>
+            </xsl:for-each>
+        </xsl:variable>
+
         
         <xsl:variable name="tempDepartment">
-            <xsl:for-each select="mods:namePart[count(@*)=0]">
+            <xsl:for-each select="mods:namePart[not(@*)]">
                 <xsl:if test="not(normalize-space(.)='')">
                   <xsl:if test="position() = last()">
                         <xsl:value-of select="normalize-space(.)"/>
@@ -495,6 +709,40 @@
                </xsl:if>
             </xsl:for-each>
         </xsl:variable>
+        <xsl:variable name="tempValue">
+            <xsl:if test="not(normalize-space($tempNamePartFamily)='')">
+                <xsl:value-of select="$tempNamePartFamily"/>
+            </xsl:if>
+            <xsl:if test="normalize-space($tempNamePartGiven)!=''">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='')">
+                    <xsl:value-of select="', '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNamePartGiven"/>
+            </xsl:if>
+            <xsl:if test="not(normalize-space($tempNamePart)='')">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='')">
+                    <xsl:value-of select="', '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNamePart"/>
+            </xsl:if>
+            <xsl:if test="not(normalize-space($tempNamePartTermsOfAddress)='')">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='') or not(normalize-space($tempNamePart)='')">
+                    <xsl:value-of select="', '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNamePartTermsOfAddress"/>
+            </xsl:if>
+            <xsl:if test="not(normalize-space($tempNamePartDate)='')">
+                <xsl:if test="not(normalize-space($tempNamePartFamily)='') or not(normalize-space($tempNamePartGiven)='') or not(normalize-space($tempNamePart)='') or not(normalize-space($tempNamePartTermsOfAddress)='')">
+                    <xsl:value-of select="', '"/>
+                </xsl:if>
+                <xsl:value-of select="$tempNamePartDate"/>
+            </xsl:if>
+        </xsl:variable>
+        <xsl:if test="not(normalize-space($tempValue)='')">
+            <field name="mods_name_corporate_namePart_merge_ms">
+                <xsl:value-of select="$tempValue"/>
+            </field>
+        </xsl:if>
         <xsl:variable name="prefix_fork">
             <xsl:value-of select="$prefix"/>
             <xsl:value-of select="'name_corporate_department_'"/>
