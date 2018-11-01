@@ -60,7 +60,7 @@
       <xsl:param name="suffix"/>
       <!-- XXX: Parameters as passed in are strings... Let's deal with it as a
         string here, for convenience. -->
-      <xsl:if test="string($index_compound_sequence) = 'true' or (string($index_compound_sequence) = 'false' and (not(self::islandora-rels-ext:isSequenceNumberOf) and  not(self::islandora-rels-ext:* and starts-with(local-name(), 'isSequenceNumberOf')))">
+      <xsl:if test="string($index_compound_sequence) = 'true' or (string($index_compound_sequence) = 'false' and not(self::islandora-rels-ext:* and starts-with(local-name(), 'isSequenceNumberOf')))">
         <xsl:call-template name="rels_ext_fields">
           <xsl:with-param name="prefix" select="$prefix"/>
           <xsl:with-param name="suffix" select="$suffix"/>
