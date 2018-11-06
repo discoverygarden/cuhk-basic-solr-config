@@ -68,8 +68,8 @@
           <xsl:with-param name="type">literal</xsl:with-param>
           <xsl:with-param name="value" select="text()"/>
         </xsl:call-template>
-      </xsl:template>
-    </xsl:if>
+      </xsl:if>
+    </xsl:template>
 
     <!-- Fork between fields without and with the namespace URI in the field
       name. -->
