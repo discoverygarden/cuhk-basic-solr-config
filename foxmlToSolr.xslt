@@ -42,7 +42,7 @@
     Parameter(s) from custom_parameters.properties.
   -->
   <xsl:param name="index_ancestors" select="false()"/>
-  <xsl:param name="index_compound_sequence" select="false()"/>
+  <xsl:param name="index_compound_sequence" select="true()"/>
 
   <!-- These values are accessible in included xslts -->
   <xsl:variable name="PROT">http</xsl:variable>
