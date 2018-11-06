@@ -38,6 +38,12 @@
   <xsl:param name="TRUSTSTOREPATH" select="repositoryName"/>
   <xsl:param name="TRUSTSTOREPASS" select="repositoryName"/>
 
+  <!--
+    Parameter(s) from custom_parameters.properties.
+  -->
+  <xsl:param name="index_ancestors" select="false()"/>
+  <xsl:param name="index_compound_sequence" select="true()"/>
+
   <!-- These values are accessible in included xslts -->
   <xsl:variable name="PROT">http</xsl:variable>
   <xsl:variable name="HOST">localhost</xsl:variable>
@@ -298,17 +304,19 @@
         reindexing all the descendents whenever indexing an object
         (updating a collection label would be fairly expensive if we blindly
         reindexed). -->
-     
-      <xsl:variable name="ancestors">
-        <xsl:call-template name="get-ancestors">
-          <xsl:with-param name="PID" select="$PID" />
-        </xsl:call-template>
-      </xsl:variable>
+      <!-- XXX: Parameters as passed in are strings... Let's deal with it as a
+        string here, for convenience. -->
+      <xsl:if test="string($index_ancestors) = 'true'">
+        <xsl:variable name="ancestors">
+          <xsl:call-template name="get-ancestors">
+            <xsl:with-param name="PID" select="$PID" />
+          </xsl:call-template>
+        </xsl:variable>
 
-      <xsl:for-each select="xalan:nodeset($ancestors)//sparql:obj[@uri != concat('info:fedora/', $PID)]">
-        <field name="ancestors_ms"><xsl:value-of select="substring-after(@uri, '/')"/></field>
-      </xsl:for-each>
-    
+        <xsl:for-each select="xalan:nodeset($ancestors)//sparql:obj[@uri != concat('info:fedora/', $PID)]">
+          <field name="ancestors_ms"><xsl:value-of select="substring-after(@uri, '/')"/></field>
+        </xsl:for-each>
+      </xsl:if>
 
     </doc>
   </xsl:template>
