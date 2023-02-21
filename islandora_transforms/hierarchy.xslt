@@ -33,6 +33,7 @@
         <xsl:with-param name="query">
           PREFIX fre: &lt;info:fedora/fedora-system:def/relations-external#&gt;
           PREFIX fm: &lt;info:fedora/fedora-system:def/model#&gt;
+          PREFIX isl: &lt;http://islandora.ca/ontology/relsext#&gt;
           SELECT ?obj
           FROM &lt;#ri&gt;
           WHERE {
@@ -41,6 +42,15 @@
             }
             UNION{
               &lt;%PID_URI%&gt; fre:isMemberOf ?obj
+            }
+            UNION{
+              &lt;%PID_URI%&gt; isl:isComponentOf ?obj
+            }
+            UNION{
+              &lt;%PID_URI%&gt; isl:isJournalMemberOf ?obj
+            }
+            UNION{
+              &lt;%PID_URI%&gt; isl:isCollectionOf ?obj
             }
             ?obj fm:state fm:Active .
             &lt;%PID_URI%&gt; fm:state fm:Active
@@ -85,6 +95,7 @@
         <xsl:with-param name="query">
           PREFIX fre: &lt;info:fedora/fedora-system:def/relations-external#&gt;
           PREFIX fm: &lt;info:fedora/fedora-system:def/model#&gt;
+          PREFIX isl: &lt;http://islandora.ca/ontology/relsext#&gt;
           SELECT ?obj
           FROM &lt;#ri&gt;
           WHERE {
@@ -93,6 +104,15 @@
             }
             UNION{
               ?obj fre:isMemberOf &lt;%PID_URI%&gt;
+            }
+            UNION{
+              &lt;%PID_URI%&gt; isl:isComponentOf ?obj
+            }
+            UNION{
+              &lt;%PID_URI%&gt; isl:isJournalMemberOf ?obj
+            }
+            UNION{
+              &lt;%PID_URI%&gt; isl:isCollectionOf ?obj
             }
             ?obj fm:state fm:Active .
             &lt;%PID_URI%&gt; fm:state fm:Active
